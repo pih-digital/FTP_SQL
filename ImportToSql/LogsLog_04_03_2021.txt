@@ -1,0 +1,7 @@
+04-03-2021 14:18:52 	Import task starting...
+04-03-2021 14:18:54 	Open excel file to read data
+04-03-2021 14:18:54 	Connecting Database
+04-03-2021 14:18:58 	Successfully import excel to database
+04-03-2021 14:19:39 	Import task starting...
+04-03-2021 14:20:01 	Open excel file to read data
+04-03-2021 14:20:38 	Connecting Database

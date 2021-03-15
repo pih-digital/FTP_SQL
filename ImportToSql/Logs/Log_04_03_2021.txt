@@ -1,0 +1,75 @@
+04-03-2021 14:22:44 	 
+04-03-2021 14:22:44 	----------------------------------------
+04-03-2021 14:22:44 	Import task starting...
+04-03-2021 14:22:48 	Open excel file to read data
+04-03-2021 14:22:48 	Connecting Database
+04-03-2021 14:22:50 	Successfully import excel to database
+04-03-2021 14:23:25 	 
+04-03-2021 14:23:25 	----------------------------------------
+04-03-2021 14:23:25 	Import task starting...
+04-03-2021 14:23:29 	Open excel file to read data
+04-03-2021 14:23:29 	Connecting Database
+04-03-2021 14:23:31 	Successfully import excel to database
+04-03-2021 14:44:24 	 
+04-03-2021 14:44:24 	----------------------------------------
+04-03-2021 14:44:24 	Import task starting...
+04-03-2021 14:44:28 	Open excel file to read data
+04-03-2021 14:44:28 	Connecting Database
+04-03-2021 14:44:30 	Successfully import excel to database
+04-03-2021 14:45:11 	 
+04-03-2021 14:45:11 	----------------------------------------
+04-03-2021 14:45:11 	Import task starting...
+04-03-2021 14:45:13 	Open excel file to read data
+04-03-2021 14:45:14 	Connecting Database
+04-03-2021 14:48:12 	 
+04-03-2021 14:48:12 	----------------------------------------
+04-03-2021 14:48:12 	Import task starting...
+04-03-2021 14:48:17 	Open excel file to read data
+04-03-2021 14:49:00 	Connecting Database
+04-03-2021 14:51:03 	System.InvalidOperationException: The given ColumnMapping does not match up with any column in the source or destination.
+   at System.Data.SqlClient.SqlBulkCopy.AnalyzeTargetAndCreateUpdateBulkCommand(BulkCopySimpleResultSet internalResults)
+   at System.Data.SqlClient.SqlBulkCopy.WriteToServerInternalRestContinuedAsync(BulkCopySimpleResultSet internalResults, CancellationToken cts, TaskCompletionSource`1 source)
+   at System.Data.SqlClient.SqlBulkCopy.WriteToServerInternalRestAsync(CancellationToken cts, TaskCompletionSource`1 source)
+   at System.Data.SqlClient.SqlBulkCopy.WriteToServerInternalAsync(CancellationToken ctoken)
+   at System.Data.SqlClient.SqlBulkCopy.WriteRowSourceToServerAsync(Int32 columnCount, CancellationToken ctoken)
+   at System.Data.SqlClient.SqlBulkCopy.WriteToServer(DataTable table, DataRowState rowState)
+   at System.Data.SqlClient.SqlBulkCopy.WriteToServer(DataTable table)
+   at ImportToSql.Program.Main(String[] args)
+04-03-2021 14:51:27 	 
+04-03-2021 14:51:27 	----------------------------------------
+04-03-2021 14:51:27 	Import task starting...
+04-03-2021 14:51:30 	Open excel file to read data
+04-03-2021 14:51:30 	Connecting Database
+04-03-2021 14:51:42 	System.InvalidOperationException: The given ColumnMapping does not match up with any column in the source or destination.
+   at System.Data.SqlClient.SqlBulkCopy.AnalyzeTargetAndCreateUpdateBulkCommand(BulkCopySimpleResultSet internalResults)
+   at System.Data.SqlClient.SqlBulkCopy.WriteToServerInternalRestContinuedAsync(BulkCopySimpleResultSet internalResults, CancellationToken cts, TaskCompletionSource`1 source)
+   at System.Data.SqlClient.SqlBulkCopy.WriteToServerInternalRestAsync(CancellationToken cts, TaskCompletionSource`1 source)
+   at System.Data.SqlClient.SqlBulkCopy.WriteToServerInternalAsync(CancellationToken ctoken)
+   at System.Data.SqlClient.SqlBulkCopy.WriteRowSourceToServerAsync(Int32 columnCount, CancellationToken ctoken)
+   at System.Data.SqlClient.SqlBulkCopy.WriteToServer(DataTable table, DataRowState rowState)
+   at System.Data.SqlClient.SqlBulkCopy.WriteToServer(DataTable table)
+   at ImportToSql.Program.Main(String[] args) in D:\Projects\Import Excel utility\ImportToSql\ImportToSql\Program.cs:line 65
+04-03-2021 14:51:54 	 
+04-03-2021 14:51:54 	----------------------------------------
+04-03-2021 14:51:54 	Import task starting...
+04-03-2021 14:51:56 	Open excel file to read data
+04-03-2021 14:51:56 	Connecting Database
+04-03-2021 14:56:16 	System.InvalidOperationException: The given ColumnMapping does not match up with any column in the source or destination.
+   at System.Data.SqlClient.SqlBulkCopy.AnalyzeTargetAndCreateUpdateBulkCommand(BulkCopySimpleResultSet internalResults)
+   at System.Data.SqlClient.SqlBulkCopy.WriteToServerInternalRestContinuedAsync(BulkCopySimpleResultSet internalResults, CancellationToken cts, TaskCompletionSource`1 source)
+   at System.Data.SqlClient.SqlBulkCopy.WriteToServerInternalRestAsync(CancellationToken cts, TaskCompletionSource`1 source)
+   at System.Data.SqlClient.SqlBulkCopy.WriteToServerInternalAsync(CancellationToken ctoken)
+   at System.Data.SqlClient.SqlBulkCopy.WriteRowSourceToServerAsync(Int32 columnCount, CancellationToken ctoken)
+   at System.Data.SqlClient.SqlBulkCopy.WriteToServer(DataTable table, DataRowState rowState)
+   at System.Data.SqlClient.SqlBulkCopy.WriteToServer(DataTable table)
+   at ImportToSql.Program.Main(String[] args) in D:\Projects\Import Excel utility\ImportToSql\ImportToSql\Program.cs:line 65
+04-03-2021 14:57:24 	 
+04-03-2021 14:57:24 	----------------------------------------
+04-03-2021 14:57:24 	Import task starting...
+04-03-2021 14:57:27 	Open excel file to read data
+04-03-2021 14:57:27 	Connecting Database
+04-03-2021 14:57:30 	Successfully import excel to database
+04-03-2021 15:03:07 	 
+04-03-2021 15:03:07 	----------------------------------------
+04-03-2021 15:03:07 	Import task starting...
+04-03-2021 15:03:10 	Open excel file to read data
