@@ -17,15 +17,21 @@ namespace ImportToSql
         static void Main(string[] args)
         {
             ErrorLog oErrorLog = new ErrorLog();
-            string path = ConfigurationManager.AppSettings["filePath"];
+            string Financefilepath = ConfigurationManager.AppSettings["FinancefilePath"];
+            string PLfilepath = ConfigurationManager.AppSettings["ProfitLossfilePath"];
 
             oErrorLog.WriteErrorLog(" ");
             oErrorLog.WriteErrorLog("----------------------------------------");
             oErrorLog.WriteErrorLog("Import task starting...");
             oErrorLog.WriteErrorLog("Open CSV file to read data");
+            Console.WriteLine("Data Extraction has been started.");
 
-            var dt = CsvReader.GetDataTabletFromCSVFile(path, oErrorLog);
-            Console.ReadLine();
+            // var dt = CsvReader.GetDataTabletFromCSVFile(Financefilepath, oErrorLog);
+            Console.WriteLine("Finance CSV file has been completed.");
+            var dtProfitLost = CsvReader.GetDTFromPLCSVFile(PLfilepath, oErrorLog);
+
+            Console.WriteLine("Profit And Lost CSV file has been completed.");
+            Console.Read();
         }
     }
 }

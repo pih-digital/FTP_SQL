@@ -19,7 +19,6 @@ namespace ImportToSql
         public static bool GetDataTabletFromCSVFile(string csv_file_path, ErrorLog oErrorLog)
         {
             DataTable csvData = new DataTable();
-            int RowCount = 0; 
             try
             {
                 using (TextFieldParser csvReader = new TextFieldParser(csv_file_path))
@@ -38,7 +37,7 @@ namespace ImportToSql
                         }
                         else
                         {
-                            datacolumn.ColumnName = datacolumn.ColumnName.Replace(" ", "_").Replace("/","").Replace(".","");
+                            datacolumn.ColumnName = datacolumn.ColumnName.Replace(" ", "_").Replace("/", "").Replace(".", "");
                         }
                         datacolumn.AllowDBNull = true;
                         if (datacolumn.ColumnName.Contains("Document_Date") || datacolumn.ColumnName.Contains("Posting_Date"))
@@ -59,18 +58,18 @@ namespace ImportToSql
                             {
                                 if (fieldData[i].Contains("-"))
                                 {
-                                    fieldData[i] = "-" + fieldData[i].Replace("-", "").Replace(",00", "");
+                                    fieldData[i] = "-" + fieldData[i].Replace("-", "").Replace(",00", "00");
                                 }
                                 else
                                 {
-                                    fieldData[i] = fieldData[i].Replace(",00", "");
+                                    fieldData[i] = fieldData[i].Replace(",00", "00");
                                 }
                             }
                             else if (fieldData[i] != "")
                             {
                                 fieldData[i] = fieldData[i];
-                             //   fieldData[i] = DateTime.Parse(fieldData[i]).ToString();
-                             //   fieldData[i] = DateTime.ParseExact(fieldData[i], "d/m/yyyy", CultureInfo.InvariantCulture).ToString();
+                                //   fieldData[i] = DateTime.Parse(fieldData[i]).ToString();
+                                //   fieldData[i] = DateTime.ParseExact(fieldData[i], "d/m/yyyy", CultureInfo.InvariantCulture).ToString();
                             }
                             else if (fieldData[i] == "")
                             {
@@ -88,20 +87,19 @@ namespace ImportToSql
                 oErrorLog.WriteErrorLog(ex.Message);
                 return false;
             }
-            //return csvData;
         }
 
         public static void InsertIntoSQLServer(DataTable dt, ErrorLog oErrorLog)
         {
+            string tableName = ConfigurationManager.AppSettings["FinancetableName"];
+            string ssqlconnectionstring = ConfigurationManager.ConnectionStrings["DB_ConnectionString"].ToString();
+
+            oErrorLog.WriteErrorLog("Connecting Database");
+            SqlBulkCopy bulkcopy = new SqlBulkCopy(ssqlconnectionstring);
+            bulkcopy.DestinationTableName = tableName;
+            SqlConnection con = new SqlConnection(ssqlconnectionstring);
             try
             {
-                string tableName = ConfigurationManager.AppSettings["tableName"];
-                string ssqlconnectionstring = ConfigurationManager.ConnectionStrings["DB_ConnectionString"].ToString();
-
-                oErrorLog.WriteErrorLog("Connecting Database");
-                SqlBulkCopy bulkcopy = new SqlBulkCopy(ssqlconnectionstring);
-                bulkcopy.DestinationTableName = tableName;
-                SqlConnection con = new SqlConnection(ssqlconnectionstring);
                 con.Open();
                 bulkcopy.ColumnMappings.Add("Symbol", "Symbol");
                 bulkcopy.ColumnMappings.Add("Assignment", "Assignment");
@@ -118,7 +116,7 @@ namespace ImportToSql
                 bulkcopy.ColumnMappings.Add("Asset", "Asset");
                 bulkcopy.ColumnMappings.Add("Order", "Order");
                 bulkcopy.ColumnMappings.Add("Posting_Date", "Posting_Date");
-                bulkcopy.ColumnMappings.Add("Company_Code", "Company_Code"); 
+                bulkcopy.ColumnMappings.Add("Company_Code", "Company_Code");
                 bulkcopy.ColumnMappings.Add("Line_item", "Line_item");
                 bulkcopy.ColumnMappings.Add("Fiscal_Year", "Fiscal_Year");
                 bulkcopy.ColumnMappings.Add("Account_type", "Account_type");
@@ -134,11 +132,15 @@ namespace ImportToSql
 
                 bulkcopy.WriteToServer(dt);
                 con.Close();
-                oErrorLog.WriteErrorLog("Successfully import excel to database");
+                oErrorLog.WriteErrorLog("Successfully import Finance CSV to database");
             }
             catch (Exception ex)
             {
                 oErrorLog.WriteErrorLog(ex.Message);
+            }
+            finally
+            {
+                con.Close();
             }
         }
 
@@ -160,6 +162,157 @@ namespace ImportToSql
                 oErrorLog.WriteErrorLog(ex.Message);
             }
 
+        }
+
+        public static bool GetDTFromPLCSVFile(string csv_file_path, ErrorLog oErrorLog)
+        {
+            DataTable csvData = new DataTable();
+            DataRow myDataRow;
+            string strCompanyCode = string.Empty;
+            string strYear = string.Empty;
+            string strPeriod = string.Empty;
+            string ReportingDate = string.Empty;
+
+            try
+            {
+                using (TextFieldParser csvReader = new TextFieldParser(csv_file_path))
+                {
+                    csvReader.SetDelimiters(new string[] { @"\n" });
+                    csvReader.HasFieldsEnclosedInQuotes = true;
+
+                    //read column names
+                    string[] colFields = new string[] { "NoUsedCol1", "F_C", "Company_Code", "Business_Area", "Text", "Amount", "NoUsedCol2", "NoUsedCol3", "NoUsedCol4", "Summary_Level", "Date_Created", "Period", "Year" };
+
+                    foreach (string column in colFields)
+                    {
+                        DataColumn datacolumn = new DataColumn(column);
+                        datacolumn.ColumnName = datacolumn.ColumnName.Replace(" ", "_").Replace("/", "").Replace(".", "");
+                        datacolumn.AllowDBNull = true;
+                        csvData.Columns.Add(datacolumn);
+                    }
+                    while (!csvReader.EndOfData)
+                    {
+                        string[] fieldData = csvReader.ReadFields();
+                        bool TextNotInsert = false;
+
+                        if (fieldData[0].ToString().StartsWith("|F|"))
+                        {
+                            string[] strarrData = fieldData[0].Split(new char[] { '|' });
+                            for (int colCount = 1; colCount < strarrData.Length; colCount++)
+                            {
+                                if (colCount == 5 && String.IsNullOrEmpty(strCompanyCode))
+                                {
+                                    ReportingDate = strarrData[colCount].Trim().Replace("(", "").Replace(")", "");
+                                    string[] dateRange = ReportingDate.Split(new char[] { '-', '.' });
+                                    strPeriod = dateRange[0];
+                                    strYear = dateRange[1];
+                                }
+                            }
+                        }
+                        else if (fieldData[0].ToString().StartsWith("| |"))
+                        {
+                            string[] strarrData = fieldData[0].Split(new char[] { '|' });
+                            myDataRow = csvData.NewRow();
+
+                            for (int colCount = 1; colCount < strarrData.Length; colCount++)
+                            {
+                                if (colCount == 2 && String.IsNullOrEmpty(strCompanyCode))
+                                    strCompanyCode = strarrData[colCount];
+                                if (colCount == 4 && String.IsNullOrWhiteSpace(strarrData[colCount]))
+                                    TextNotInsert = true;
+                                if (colCount >= 5 && strarrData[colCount] != "" && strarrData[colCount].Contains("-"))
+                                    strarrData[colCount] = "-" + strarrData[colCount].Trim().Replace("-", "");
+
+                                if (colCount == 2 && string.IsNullOrEmpty(strarrData[colCount].Trim()))
+                                    strarrData[colCount] = strCompanyCode;
+
+                                if (strarrData[colCount] != "")
+                                    myDataRow[colCount] = strarrData[colCount].Trim().Replace("*", "");
+                                else
+                                    myDataRow[colCount] = null;
+
+                                myDataRow["Date_Created"] = System.DateTime.Now;
+                                myDataRow["Period"] = strPeriod;
+                                myDataRow["Year"] = strYear;
+                            }
+                            if (!TextNotInsert)
+                            {
+                                csvData.Rows.Add(myDataRow);
+                                TextNotInsert = false;
+                            }
+                        }
+                    }
+                }
+
+                DeleteCompanyCodeProfitLost(strYear, strPeriod, strCompanyCode, oErrorLog);
+                InsertProfitLost(csvData, oErrorLog);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                oErrorLog.WriteErrorLog(ex.Message);
+                return false;
+            }
+        }
+
+        public static void DeleteCompanyCodeProfitLost(string Year, string Period, string Company_Code, ErrorLog oErrorLog)
+        {
+            string tableName = ConfigurationManager.AppSettings["ProfitLosttableName"];
+            string ssqlconnectionstring = ConfigurationManager.ConnectionStrings["DB_ConnectionString"].ToString();
+            SqlConnection connection = new SqlConnection(ssqlconnectionstring);
+            oErrorLog.WriteErrorLog("Connected to Database successfully.");
+
+            string sqlStatement = " DELETE FROM [FinancialStatement] WHERE [Period] = @Period and [Year] = @Year and [Company_Code] = @Company_Code ";
+            try
+            {
+                connection.Open();
+                SqlCommand cmd = new SqlCommand(sqlStatement, connection);
+                cmd.Parameters.AddWithValue("@Period", Period);
+                cmd.Parameters.AddWithValue("@Year", Year);
+                cmd.Parameters.AddWithValue("@Company_Code", Company_Code);
+                cmd.CommandType = CommandType.Text;
+                cmd.ExecuteNonQuery();
+                oErrorLog.WriteErrorLog("Deleted the record from database table successfully [Period] = " + Period + " and [Year] = " + Year + " and [Company_Code] =" + Company_Code);
+            }
+            catch (Exception ex)
+            {
+                oErrorLog.WriteErrorLog(ex.Message);
+            }
+            finally
+            {
+                connection.Close();
+            }
+        }
+
+        public static void InsertProfitLost(DataTable dt, ErrorLog oErrorLog)
+        {
+            try
+            {
+                string tableName = ConfigurationManager.AppSettings["ProfitLosttableName"];
+                string ssqlconnectionstring = ConfigurationManager.ConnectionStrings["DB_ConnectionString"].ToString();
+
+                oErrorLog.WriteErrorLog("Connected to Database successfully.");
+                SqlBulkCopy bulkcopy = new SqlBulkCopy(ssqlconnectionstring);
+                bulkcopy.DestinationTableName = tableName;
+                SqlConnection con = new SqlConnection(ssqlconnectionstring);
+                con.Open();
+                bulkcopy.ColumnMappings.Add("Year", "Year");
+                bulkcopy.ColumnMappings.Add("Period", "Period");
+                bulkcopy.ColumnMappings.Add("F_C", "F_C");
+                bulkcopy.ColumnMappings.Add("Company_Code", "Company_Code");
+                bulkcopy.ColumnMappings.Add("Business_Area", "Business_Area");
+                bulkcopy.ColumnMappings.Add("Text", "Text");
+                bulkcopy.ColumnMappings.Add("Amount", "Amount");
+                bulkcopy.ColumnMappings.Add("Summary_Level", "Summary_Level");
+                bulkcopy.ColumnMappings.Add("Date_Created", "Date_Created");
+                bulkcopy.WriteToServer(dt);
+                con.Close();
+                oErrorLog.WriteErrorLog("Successfully import PnL CSV to database table.");
+            }
+            catch (Exception ex)
+            {
+                oErrorLog.WriteErrorLog(ex.Message);
+            }
         }
     }
 }
