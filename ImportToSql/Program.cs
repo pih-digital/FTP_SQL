@@ -19,6 +19,8 @@ namespace ImportToSql
             ErrorLog oErrorLog = new ErrorLog();
             string Financefilepath = ConfigurationManager.AppSettings["FinancefilePath"];
             string PLfilepath = ConfigurationManager.AppSettings["ProfitLossfilePath"];
+            string AllowToRunFinance = ConfigurationManager.AppSettings["AllowToRunFinance"];
+            string AllowToRunPnL = ConfigurationManager.AppSettings["AllowToRunProfitLost"];
 
             oErrorLog.WriteErrorLog(" ");
             oErrorLog.WriteErrorLog("----------------------------------------");
@@ -26,10 +28,16 @@ namespace ImportToSql
             oErrorLog.WriteErrorLog("Open CSV file to read data");
             Console.WriteLine("Data Extraction has been started.");
 
-            // var dt = CsvReader.GetDataTabletFromCSVFile(Financefilepath, oErrorLog);
+            if (AllowToRunFinance == "true")
+            {
+                var dt = CsvReader.GetDataTabletFromCSVFile(Financefilepath, oErrorLog);
+            }
             Console.WriteLine("Finance CSV file has been completed.");
-            var dtProfitLost = CsvReader.GetDTFromPLCSVFile(PLfilepath, oErrorLog);
 
+            if (AllowToRunPnL == "true")
+            {
+                var dtProfitLost = CsvReader.GetDTFromPLCSVFile(PLfilepath, oErrorLog);
+            }
             Console.WriteLine("Profit And Lost CSV file has been completed.");
             Console.Read();
         }
