@@ -39,7 +39,6 @@ namespace ImportToSql
                 var dtProfitLost = CsvReader.GetDTFromPLCSVFile(PLfilepath, oErrorLog);
             }
             Console.WriteLine("Profit And Lost CSV file has been completed.");
-            Console.Read();
         }
     }
 }

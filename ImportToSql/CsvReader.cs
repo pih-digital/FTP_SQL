@@ -19,6 +19,8 @@ namespace ImportToSql
         public static bool GetDataTabletFromCSVFile(string csv_file_path, ErrorLog oErrorLog)
         {
             DataTable csvData = new DataTable();
+            DataRow myDataRow;
+
             try
             {
                 using (TextFieldParser csvReader = new TextFieldParser(csv_file_path))
@@ -48,9 +50,16 @@ namespace ImportToSql
                         }
                         csvData.Columns.Add(datacolumn);
                     }
+
+                    DataColumn dcCreatedDate = new DataColumn("Date_Created");
+                    dcCreatedDate.AllowDBNull = true;
+                    csvData.Columns.Add(dcCreatedDate);
+
                     while (!csvReader.EndOfData)
                     {
                         string[] fieldData = csvReader.ReadFields();
+                        myDataRow = csvData.NewRow();
+
                         //Making empty value as null
                         for (int i = 0; i < fieldData.Length; i++)
                         {
@@ -67,16 +76,18 @@ namespace ImportToSql
                             }
                             else if (fieldData[i] != "")
                             {
-                                fieldData[i] = fieldData[i];
+                                myDataRow[i] = fieldData[i];
                                 //   fieldData[i] = DateTime.Parse(fieldData[i]).ToString();
                                 //   fieldData[i] = DateTime.ParseExact(fieldData[i], "d/m/yyyy", CultureInfo.InvariantCulture).ToString();
                             }
                             else if (fieldData[i] == "")
                             {
-                                fieldData[i] = null;
+                                myDataRow[i] = null;
                             }
                         }
-                        csvData.Rows.Add(fieldData);
+                        myDataRow["Date_Created"] = System.DateTime.Now;
+
+                        csvData.Rows.Add(myDataRow);
                     }
                 }
                 InsertIntoSQLServer(csvData, oErrorLog);
@@ -129,7 +140,7 @@ namespace ImportToSql
                 bulkcopy.ColumnMappings.Add("Personnel_Number", "Personnel_Number");
                 bulkcopy.ColumnMappings.Add("Account_ID", "Account_ID");
                 bulkcopy.ColumnMappings.Add("House_bank", "House_bank");
-
+                bulkcopy.ColumnMappings.Add("Date_Created", "Date_Created"); 
                 bulkcopy.WriteToServer(dt);
                 con.Close();
                 oErrorLog.WriteErrorLog("Successfully import Finance CSV to database");
