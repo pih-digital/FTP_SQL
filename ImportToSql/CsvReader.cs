@@ -20,13 +20,14 @@ namespace ImportToSql
         {
             DataTable csvData = new DataTable();
             DataRow myDataRow;
+            int RowCount = 0;
 
             try
             {
                 using (TextFieldParser csvReader = new TextFieldParser(csv_file_path))
                 {
                     csvReader.SetDelimiters(new string[] { "|" });
-                    csvReader.HasFieldsEnclosedInQuotes = true;
+                    csvReader.HasFieldsEnclosedInQuotes = false;
 
                     //read column names
                     string[] colFields = csvReader.ReadFields();
@@ -54,7 +55,6 @@ namespace ImportToSql
                     DataColumn dcCreatedDate = new DataColumn("Date_Created");
                     dcCreatedDate.AllowDBNull = true;
                     csvData.Columns.Add(dcCreatedDate);
-
                     while (!csvReader.EndOfData)
                     {
                         string[] fieldData = csvReader.ReadFields();
@@ -81,13 +81,17 @@ namespace ImportToSql
                                 //   fieldData[i] = DateTime.ParseExact(fieldData[i], "d/m/yyyy", CultureInfo.InvariantCulture).ToString();
                             }
                             else if (fieldData[i] == "")
-                            {
-                                myDataRow[i] = null;
+                            {  
+                                if (i == 14)
+                                    myDataRow[i] = DBNull.Value;
+                                else
+                                    myDataRow[i] = null;
                             }
                         }
                         myDataRow["Date_Created"] = System.DateTime.Now;
-
+                        
                         csvData.Rows.Add(myDataRow);
+                        RowCount++;
                     }
                 }
                 InsertIntoSQLServer(csvData, oErrorLog);
@@ -96,6 +100,7 @@ namespace ImportToSql
             catch (Exception ex)
             {
                 oErrorLog.WriteErrorLog(ex.Message);
+                oErrorLog.WriteErrorLog("Something went wrong on line number."+ RowCount + "in CSV file");
                 return false;
             }
         }
