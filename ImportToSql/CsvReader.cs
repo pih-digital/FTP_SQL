@@ -76,7 +76,7 @@ namespace ImportToSql
                             }
                             else if (fieldData[i] != "")
                             {
-                                myDataRow[i] = fieldData[i];
+                                myDataRow[i] = fieldData[i].Replace(",,", "");
                                 //   fieldData[i] = DateTime.Parse(fieldData[i]).ToString();
                                 //   fieldData[i] = DateTime.ParseExact(fieldData[i], "d/m/yyyy", CultureInfo.InvariantCulture).ToString();
                             }
@@ -100,11 +100,10 @@ namespace ImportToSql
             catch (Exception ex)
             {
                 oErrorLog.WriteErrorLog(ex.Message);
-                oErrorLog.WriteErrorLog("Something went wrong on line number."+ RowCount + "in CSV file");
+                oErrorLog.WriteErrorLog("Something went wrong on line number: "+ RowCount + "in CSV file");
                 return false;
             }
         }
-
         public static void InsertIntoSQLServer(DataTable dt, ErrorLog oErrorLog)
         {
             string tableName = ConfigurationManager.AppSettings["FinancetableName"];
