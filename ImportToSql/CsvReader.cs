@@ -42,7 +42,7 @@ namespace ImportToSql
                         }
                         else
                         {
-                            datacolumn.ColumnName = datacolumn.ColumnName.Replace(" ", "_").Replace("/", "").Replace(".", "");
+                            datacolumn.ColumnName = datacolumn.ColumnName.Replace(" ", "_").Replace("/", "").Replace(".", "").Replace(",,","");
                         }
                         datacolumn.AllowDBNull = true;
                         if (datacolumn.ColumnName.Contains("Document_Date") || datacolumn.ColumnName.Contains("Posting_Date"))
