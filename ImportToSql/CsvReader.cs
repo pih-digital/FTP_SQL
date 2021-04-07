@@ -20,8 +20,10 @@ namespace ImportToSql
         {
             DataTable csvData = new DataTable();
             DataRow myDataRow;
+            DataRow myIncompleteDataRow;
+            DateTime dtnow = DateTime.Now;
             int RowCount = 0;
-
+            int IncompleteColumn = 0;
             try
             {
                 using (TextFieldParser csvReader = new TextFieldParser(csv_file_path))
@@ -58,41 +60,74 @@ namespace ImportToSql
                     while (!csvReader.EndOfData)
                     {
                         string[] fieldData = csvReader.ReadFields();
-                        myDataRow = csvData.NewRow();
 
-                        //Making empty value as null
-                        for (int i = 0; i < fieldData.Length; i++)
+                        if (fieldData[0].StartsWith("@") || fieldData[0].StartsWith("\"@"))
                         {
-                            if (i == 7 && fieldData[i] != "")
+                            if (RowCount >= 22499)
+                            { }
+                            myDataRow = csvData.NewRow();
+                            IncompleteColumn = 0;
+                            //Making empty value as null
+                            for (int i = 0; i < fieldData.Length; i++)
                             {
-                                if (fieldData[i].Contains("-"))
+                                IncompleteColumn=i;
+                                if (i == 7 && fieldData[i] != "")
                                 {
-                                    fieldData[i] = "-" + fieldData[i].Replace("-", "").Replace(",00", "00");
+                                    if (fieldData[i].Contains("-"))
+                                        fieldData[i] = "-" + fieldData[i].Replace("-", "").Replace(",00", "00");
+                                    else
+                                        fieldData[i] = fieldData[i].Replace(",00", "00");
                                 }
-                                else
+                                else if (fieldData[i] != "")
                                 {
-                                    fieldData[i] = fieldData[i].Replace(",00", "00");
+                                    myDataRow[i] = fieldData[i].Replace(",,", "");
+                                }
+                                else if (fieldData[i] == "")
+                                {
+                                    if (i == 14)
+                                        myDataRow[i] = DBNull.Value;
+                                    else
+                                        myDataRow[i] = null;
                                 }
                             }
-                            else if (fieldData[i] != "")
-                            {
-                                myDataRow[i] = fieldData[i].Replace(",,", "");
-                                //   fieldData[i] = DateTime.Parse(fieldData[i]).ToString();
-                                //   fieldData[i] = DateTime.ParseExact(fieldData[i], "d/m/yyyy", CultureInfo.InvariantCulture).ToString();
-                            }
-                            else if (fieldData[i] == "")
-                            {  
-                                if (i == 14)
-                                    myDataRow[i] = DBNull.Value;
-                                else
-                                    myDataRow[i] = null;
-                            }
+                            myDataRow["Date_Created"] = dtnow;
+                            myIncompleteDataRow = myDataRow;
+                            csvData.Rows.Add(myDataRow);
+                            RowCount++;
                         }
-                        myDataRow["Date_Created"] = System.DateTime.Now;
-                        
-                        csvData.Rows.Add(myDataRow);
-                        RowCount++; 
+                        else if(!fieldData[0].StartsWith(",,"))
+                        {
+                            if (RowCount >= 22499)
+                            { }
+                            myDataRow = csvData.Rows[csvData.Rows.Count - 1];
+                            
+                            for (int i = 0; i < fieldData.Length; i++)
+                            {
+                                if (i + IncompleteColumn == 7  && fieldData[i] != "")
+                                {
+                                    if (fieldData[i].Contains("-"))
+                                        fieldData[i] = "-" + fieldData[i].Replace("-", "").Replace(",00", "00");
+                                    else
+                                        fieldData[i] = fieldData[i].Replace(",00", "00");
+                                }
+                                else if (fieldData[i] != "")
+                                {
+                                    myDataRow[i + IncompleteColumn] = fieldData[i].Replace(",,", "");
+                                }
+                                else if (fieldData[i] == "")
+                                {
+                                    if (i + IncompleteColumn == 14 )
+                                        myDataRow[i + IncompleteColumn] = DBNull.Value;
+                                    else
+                                        myDataRow[i + IncompleteColumn] = null;
+                                }
+                            }
+                            csvData.AcceptChanges();
+                            RowCount++;
+                        }
+
                     }
+
                 }
                 InsertIntoSQLServer(csvData, oErrorLog);
                 return true;
@@ -187,6 +222,7 @@ namespace ImportToSql
             string strYear = string.Empty;
             string strPeriod = string.Empty;
             string ReportingDate = string.Empty;
+            DateTime dtnow = DateTime.Now;
 
             try
             {
@@ -246,7 +282,7 @@ namespace ImportToSql
                                 else
                                     myDataRow[colCount] = null;
 
-                                myDataRow["Date_Created"] = System.DateTime.Now;
+                                myDataRow["Date_Created"] = dtnow;
                                 myDataRow["Period"] = strPeriod;
                                 myDataRow["Year"] = strYear;
                             }
