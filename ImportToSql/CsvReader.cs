@@ -91,7 +91,7 @@ namespace ImportToSql
                         myDataRow["Date_Created"] = System.DateTime.Now;
                         
                         csvData.Rows.Add(myDataRow);
-                        RowCount++;
+                        RowCount++; 
                     }
                 }
                 InsertIntoSQLServer(csvData, oErrorLog);
