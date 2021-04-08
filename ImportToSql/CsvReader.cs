@@ -81,7 +81,7 @@ namespace ImportToSql
                                 }
                                 else if (fieldData[i] != "")
                                 {
-                                    myDataRow[i] = fieldData[i].Replace(",,", "");
+                                    myDataRow[i] = fieldData[i];     // Added later .Replace(",,", "");
                                 }
                                 else if (fieldData[i] == "")
                                 {
@@ -110,11 +110,11 @@ namespace ImportToSql
                                         fieldData[i] = "-" + fieldData[i].Replace("-", "").Replace(",00", "00").Replace("\"", "");
                                     else
                                         fieldData[i] = fieldData[i].Replace(",00", "00");
-                                    myDataRow[i] = fieldData[i].Replace(",,", "");
+                                     myDataRow[i] = fieldData[i].Replace(",,", "");
                                 }
                                 else if (fieldData[i] != "")
                                 {
-                                    myDataRow[i + IncompleteColumn] = fieldData[i].Replace(",,", "");
+                                    myDataRow[i + IncompleteColumn] = fieldData[i];     // Added later.Replace(",,", "");
                                 }
                                 else if (fieldData[i] == "")
                                 {
