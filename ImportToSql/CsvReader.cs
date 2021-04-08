@@ -63,7 +63,7 @@ namespace ImportToSql
 
                         if (fieldData[0].StartsWith("@") || fieldData[0].StartsWith("\"@"))
                         {
-                            if (RowCount >= 22499)
+                            if (RowCount >= 50588)
                             { }
                             myDataRow = csvData.NewRow();
                             IncompleteColumn = 0;
@@ -74,9 +74,10 @@ namespace ImportToSql
                                 if (i == 7 && fieldData[i] != "")
                                 {
                                     if (fieldData[i].Contains("-"))
-                                        fieldData[i] = "-" + fieldData[i].Replace("-", "").Replace(",00", "00");
+                                        fieldData[i] = "-" + fieldData[i].Replace("-", "").Replace(",00", "00").Replace("\"","");
                                     else
                                         fieldData[i] = fieldData[i].Replace(",00", "00");
+                                    myDataRow[i] = fieldData[i].Replace(",,", "");
                                 }
                                 else if (fieldData[i] != "")
                                 {
@@ -97,7 +98,7 @@ namespace ImportToSql
                         }
                         else if(!fieldData[0].StartsWith(",,"))
                         {
-                            if (RowCount >= 22499)
+                            if (RowCount >= 50589)
                             { }
                             myDataRow = csvData.Rows[csvData.Rows.Count - 1];
                             
@@ -106,9 +107,10 @@ namespace ImportToSql
                                 if (i + IncompleteColumn == 7  && fieldData[i] != "")
                                 {
                                     if (fieldData[i].Contains("-"))
-                                        fieldData[i] = "-" + fieldData[i].Replace("-", "").Replace(",00", "00");
+                                        fieldData[i] = "-" + fieldData[i].Replace("-", "").Replace(",00", "00").Replace("\"", "");
                                     else
                                         fieldData[i] = fieldData[i].Replace(",00", "00");
+                                    myDataRow[i] = fieldData[i].Replace(",,", "");
                                 }
                                 else if (fieldData[i] != "")
                                 {
