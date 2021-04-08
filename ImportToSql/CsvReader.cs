@@ -42,7 +42,7 @@ namespace ImportToSql
                         }
                         else
                         {
-                            datacolumn.ColumnName = datacolumn.ColumnName.Replace(" ", "_").Replace("/", "").Replace(".", "").Replace(",,","");
+                            datacolumn.ColumnName = datacolumn.ColumnName.Replace(" ", "_").Replace("/", "").Replace(".", "").Replace(",,", "");
                         }
                         datacolumn.AllowDBNull = true;
                         if (datacolumn.ColumnName.Contains("Document_Date") || datacolumn.ColumnName.Contains("Posting_Date"))
@@ -60,21 +60,23 @@ namespace ImportToSql
                     while (!csvReader.EndOfData)
                     {
                         string[] fieldData = csvReader.ReadFields();
+                        if (fieldData.Length <= 2)
+                        { }
 
                         if (fieldData[0].StartsWith("@") || fieldData[0].StartsWith("\"@"))
                         {
-                            if (RowCount >= 50588)
+                            if (RowCount >= 181)
                             { }
                             myDataRow = csvData.NewRow();
                             IncompleteColumn = 0;
                             //Making empty value as null
                             for (int i = 0; i < fieldData.Length; i++)
                             {
-                                IncompleteColumn=i;
+                                IncompleteColumn = i;
                                 if (i == 7 && fieldData[i] != "")
                                 {
                                     if (fieldData[i].Contains("-"))
-                                        fieldData[i] = "-" + fieldData[i].Replace("-", "").Replace(",00", "00").Replace("\"","");
+                                        fieldData[i] = "-" + fieldData[i].Replace("-", "").Replace(",00", "00").Replace("\"", "");
                                     else
                                         fieldData[i] = fieldData[i].Replace(",00", "00");
                                     myDataRow[i] = fieldData[i].Replace(",,", "");
@@ -96,21 +98,28 @@ namespace ImportToSql
                             csvData.Rows.Add(myDataRow);
                             RowCount++;
                         }
-                        else if(!fieldData[0].StartsWith(",,"))
+                        else if (fieldData[0].StartsWith(",,"))
                         {
-                            if (RowCount >= 50589)
+                            myDataRow = csvData.Rows[csvData.Rows.Count - 1];
+                            myDataRow[IncompleteColumn] = myDataRow[IncompleteColumn] + fieldData[0];
+                            csvData.AcceptChanges();
+                        }
+                        else 
+                        {
+                            if (RowCount >= 181)
                             { }
                             myDataRow = csvData.Rows[csvData.Rows.Count - 1];
-                            
-                            for (int i = 0; i < fieldData.Length; i++)
+                            myDataRow[IncompleteColumn] = myDataRow[IncompleteColumn] + fieldData[0];
+
+                            for (int i = 1; i < fieldData.Length; i++)
                             {
-                                if (i + IncompleteColumn == 7  && fieldData[i] != "")
+                                if (i + IncompleteColumn == 7 && fieldData[i] != "")
                                 {
                                     if (fieldData[i].Contains("-"))
                                         fieldData[i] = "-" + fieldData[i].Replace("-", "").Replace(",00", "00").Replace("\"", "");
                                     else
                                         fieldData[i] = fieldData[i].Replace(",00", "00");
-                                     myDataRow[i] = fieldData[i].Replace(",,", "");
+                                    myDataRow[i] = fieldData[i].Replace(",,", "");
                                 }
                                 else if (fieldData[i] != "")
                                 {
@@ -118,18 +127,15 @@ namespace ImportToSql
                                 }
                                 else if (fieldData[i] == "")
                                 {
-                                    if (i + IncompleteColumn == 14 )
+                                    if (i + IncompleteColumn == 14)
                                         myDataRow[i + IncompleteColumn] = DBNull.Value;
                                     else
                                         myDataRow[i + IncompleteColumn] = null;
                                 }
                             }
                             csvData.AcceptChanges();
-                            RowCount++;
                         }
-
                     }
-
                 }
                 InsertIntoSQLServer(csvData, oErrorLog);
                 return true;
@@ -137,7 +143,7 @@ namespace ImportToSql
             catch (Exception ex)
             {
                 oErrorLog.WriteErrorLog(ex.Message);
-                oErrorLog.WriteErrorLog("Something went wrong on line number: "+ RowCount + "in CSV file");
+                oErrorLog.WriteErrorLog("Something went wrong on line number: " + RowCount + "in CSV file");
                 return false;
             }
         }
