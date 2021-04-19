@@ -62,13 +62,9 @@ namespace ImportToSql
                     while (!csvReader.EndOfData)
                     {
                         string[] fieldData = csvReader.ReadFields();
-                        if (fieldData.Length <= 2)
-                        { }
-
+                        
                         if (fieldData[0].StartsWith("@") || fieldData[0].StartsWith("\"@"))
                         {
-                            if (RowCount >= 181)
-                            { }
                             myDataRow = csvData.NewRow();
                             IncompleteColumn = 0;
                             //Making empty value as null
@@ -108,8 +104,6 @@ namespace ImportToSql
                         }
                         else 
                         {
-                            if (RowCount >= 181)
-                            { }
                             myDataRow = csvData.Rows[csvData.Rows.Count - 1];
                             myDataRow[IncompleteColumn] = myDataRow[IncompleteColumn] + fieldData[0];
 
@@ -235,8 +229,8 @@ namespace ImportToSql
             {
                 using (TextFieldParser csvReader = new TextFieldParser(csv_file_path))
                 {
-                    csvReader.SetDelimiters(new string[] { "|" });
-                    csvReader.HasFieldsEnclosedInQuotes = true;
+                    csvReader.SetDelimiters(new string[] { "`" });
+                    csvReader.HasFieldsEnclosedInQuotes = false;
 
                     //read column names
                     string[] colFields = csvReader.ReadFields();
@@ -352,6 +346,7 @@ namespace ImportToSql
                 bulkcopy.ColumnMappings.Add("Payment_Order", "Payment_Order");
                 bulkcopy.ColumnMappings.Add("Reverse_Clearing", "Reverse_Clearing");
                 bulkcopy.ColumnMappings.Add("Date_Created", "Date_Created");
+                bulkcopy.ColumnMappings.Add("Account", "Account");
                 bulkcopy.WriteToServer(dt);
                 con.Close();
                 oErrorLog.WriteErrorLog("Successfully import Accounts Receivable CSV to database table.");
@@ -401,8 +396,8 @@ namespace ImportToSql
             {
                 using (TextFieldParser csvReader = new TextFieldParser(csv_file_path))
                 {
-                    csvReader.SetDelimiters(new string[] { "|" });
-                    csvReader.HasFieldsEnclosedInQuotes = true;
+                    csvReader.SetDelimiters(new string[] { "`" });
+                    csvReader.HasFieldsEnclosedInQuotes = false;
 
                     //read column names
                     string[] colFields = csvReader.ReadFields();
@@ -433,6 +428,7 @@ namespace ImportToSql
                     {
                         string[] fieldData = csvReader.ReadFields();
                         myDataRow = csvData.NewRow();
+
                         //Making empty value as null
                         for (int i = 0; i < fieldData.Length; i++)
                         {
@@ -505,6 +501,8 @@ namespace ImportToSql
                 bulkcopy.ColumnMappings.Add("Reason_Code", "Reason_Code");
                 bulkcopy.ColumnMappings.Add("GL_Account", "GL_Account");
                 bulkcopy.ColumnMappings.Add("Date_Created", "Date_Created");
+                bulkcopy.ColumnMappings.Add("Reverse_Clearing", "Reverse_Clearing");
+                bulkcopy.ColumnMappings.Add("Account", "Account");
                 bulkcopy.WriteToServer(dt);
                 con.Close();
                 oErrorLog.WriteErrorLog("Successfully import Accounts Payable CSV to database table.");
