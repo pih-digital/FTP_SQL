@@ -31,6 +31,7 @@ namespace ImportToSql
             string AccReceivablefilepath = ConfigurationManager.AppSettings["AccReceivablefilePath"];
             string AccPayablefilepath = ConfigurationManager.AppSettings["AccPayablefilePath"];
             string PLfilepath = ConfigurationManager.AppSettings["ProfitLossfilePath"];
+            string FS2filepath = ConfigurationManager.AppSettings["FS2filePath"];
 
             string AllowToRunAura = ConfigurationManager.AppSettings["AllowToRunAura"];
             string AllowToRunPnL = ConfigurationManager.AppSettings["AllowToRunProfitLost"];
@@ -46,6 +47,7 @@ namespace ImportToSql
             string AllowToRunProfitabilty = ConfigurationManager.AppSettings["AllowToRunProfitabilty"];
             string AllowToRunAccReceivable = ConfigurationManager.AppSettings["AllowToRunAccReceivable"];
             string AllowToRunAccPayable = ConfigurationManager.AppSettings["AllowToRunAccPayable"];
+            string AllowToFinanceSource2 = ConfigurationManager.AppSettings["AllowToRunFS2"];
 
             oErrorLog.WriteErrorLog(" ");
             oErrorLog.WriteErrorLog("----------------------------------------");
@@ -148,7 +150,13 @@ namespace ImportToSql
                 Console.WriteLine("Profit and Lost Data Extraction has been started.");
                 var dtProfitLost = CsvReader.GetDTFromPLCSVFile(PLfilepath, oErrorLog);
                 Console.WriteLine("Profit And Lost CSV file has been completed.");
+            }
 
+            if (AllowToFinanceSource2 == "true")
+            {
+                Console.WriteLine("Finance Source2 Data Extraction has been started.");
+                var dtFinanceSource2 = CsvReader.GetDTFromExcelFileSource2(FS2filepath, oErrorLog);
+                Console.WriteLine("Finance Source2 Excel file has been completed.");
             }
         }
     }

@@ -11,6 +11,8 @@ using System.IO;
 using System.Data;
 using Microsoft.VisualBasic.FileIO;
 using System.Globalization;
+using ExcelApp = Microsoft.Office.Interop.Excel;
+
 
 namespace ImportToSql
 {
@@ -794,6 +796,169 @@ namespace ImportToSql
                 bulkcopy.WriteToServer(dt);
                 con.Close();
                 oErrorLog.WriteErrorLog("Successfully import RO Master CSV to database table.");
+            }
+            catch (Exception ex)
+            {
+                oErrorLog.WriteErrorLog(ex.Message);
+            }
+        }
+
+        public static bool GetDTFromExcelFileSource2(string csv_file_path, ErrorLog oErrorLog)
+        {
+            DateTime dtnow = DateTime.Now;
+            int RowCount = 0;
+
+            try
+            {
+                //Create COM Objects.
+                ExcelApp.Application excelApp = new ExcelApp.Application();
+                DataRow myNewRow;
+                DataTable MyDataTable = new DataTable();
+                DateTime conv;
+                if (excelApp == null)
+                {
+                    Console.WriteLine("Excel is not installed!!");
+                    return true;
+                }
+
+                //Notice: Change this path to your real excel file path
+                ExcelApp.Workbook excelBook = excelApp.Workbooks.Open(csv_file_path);
+                ExcelApp._Worksheet excelSheet = excelBook.Sheets[1];
+                ExcelApp.Range excelRange = excelSheet.UsedRange;
+
+                int rows = excelRange.Rows.Count;
+                int cols = excelRange.Columns.Count;
+
+                //read column names
+                string[] colFields = new string[]  { "Cleared/Open Items Symbol","Assignment","Document Number","Business Area","Document type","Document Date",
+                    "Posting Key","Amount in Local Currency","Local Currency","Material","Profit Center","Segment","Text","Offsetting Account","Quantity",
+                        "Plant","Posting Date","Company Code","Order","Clearing Date","Fiscal Year","Cost Center","G/L Account"};
+
+                foreach (string column in colFields)
+                {
+                    DataColumn datacolumn = new DataColumn(column);
+                    if (datacolumn.ColumnName.Contains("Cleared/Open Items Symbol"))
+                    {
+                        datacolumn.ColumnName = "Symbol";
+                    }
+                    else
+                    {
+                        datacolumn.ColumnName = datacolumn.ColumnName.Replace(" ", "_").Replace("/", "").Replace(".", "").Replace(",,", "");
+                    }
+                    datacolumn.AllowDBNull = true;
+
+                    if (datacolumn.ColumnName.Contains("Document_Date") || datacolumn.ColumnName.Contains("Clearing_Date") || datacolumn.ColumnName.Contains("Posting_Date")
+                            || datacolumn.ColumnName.ToString().ToLower() == "net_due_date" || datacolumn.ColumnName.Contains("Payment_Date"))
+                        datacolumn.DataType = System.Type.GetType("System.DateTime");
+
+                    MyDataTable.Columns.Add(datacolumn);
+                }
+
+                DataColumn dcCreatedDate = new DataColumn("Date_Created");
+                dcCreatedDate.AllowDBNull = true;
+                MyDataTable.Columns.Add(dcCreatedDate);
+
+                //first row using for heading, start second row for data
+                for (int i = 2; i <= rows; i++)
+                {
+                    myNewRow = MyDataTable.NewRow();
+                    myNewRow["Symbol"] = "1"; excelRange.Cells[i, 1].Value2.ToString();
+                    myNewRow["Assignment"] = excelRange.Cells[i, 2].Value2.ToString() != "" ? excelRange.Cells[i, 2].Value2.ToString() : null;
+                    myNewRow["Document_Number"] = excelRange.Cells[i, 3].Value2.ToString() != "" ? excelRange.Cells[i, 3].Value2.ToString() : null;
+                    myNewRow["Business_Area"] = excelRange.Cells[i, 4].Value2.ToString() != "" ? excelRange.Cells[i, 4].Value2.ToString() : null;
+                    myNewRow["Document_type"] = excelRange.Cells[i, 5].Value2.ToString() != "" ? excelRange.Cells[i, 5].Value2.ToString() : null;
+                    if (excelRange.Cells[i, 6].Value2 != null)
+                    {
+                        conv = DateTime.FromOADate(double.Parse(excelRange.Cells[i, 6].Value2.ToString()));
+                        myNewRow["Document_Date"] = conv;
+                    }
+                    myNewRow["Posting_Key"] = excelRange.Cells[i, 7].Value2.ToString() != "" ? excelRange.Cells[i, 7].Value2.ToString() : null;
+                    myNewRow["Amount_in_Local_Currency"] = excelRange.Cells[i, 8].Value2.ToString() != "" ? excelRange.Cells[i, 8].Value2.ToString() : null;
+                    myNewRow["Local_Currency"] = excelRange.Cells[i, 9].Value2.ToString() != "" ? excelRange.Cells[i, 9].Value2.ToString() : null;
+                    myNewRow["Material"] = excelRange.Cells[i, 10].Value2.ToString() != "" ? excelRange.Cells[i, 10].Value2.ToString() : null;
+                    myNewRow["Profit_Center"] = excelRange.Cells[i, 11].Value2.ToString() != "" ? excelRange.Cells[i, 11].Value2.ToString() : null;
+                    myNewRow["Segment"] = excelRange.Cells[i, 12].Value2.ToString() != "" ? excelRange.Cells[i, 12].Value2.ToString() : null;
+                    myNewRow["Text"] = excelRange.Cells[i, 13].Value2.ToString() != "" ? excelRange.Cells[i, 13].Value2.ToString() : null;
+                    myNewRow["Offsetting_Account"] = excelRange.Cells[i, 14].Value2.ToString() != "" ? excelRange.Cells[i, 14].Value2.ToString() : null;
+                    myNewRow["Quantity"] = excelRange.Cells[i, 15].Value2 != null ? excelRange.Cells[i, 15].Value2.ToString() : null;
+                    myNewRow["Plant"] = excelRange.Cells[i, 16].Value2.ToString() != "" ? excelRange.Cells[i, 16].Value2.ToString() : null;
+                    if (excelRange.Cells[i, 17].Value2 != null)
+                    {
+                        conv = DateTime.FromOADate(double.Parse(excelRange.Cells[i, 17].Value2.ToString()));
+                        myNewRow["Posting_Date"] = conv;
+                    }
+                    myNewRow["Company_Code"] = excelRange.Cells[i, 18].Value2.ToString() != "" ? excelRange.Cells[i, 18].Value2.ToString() : null;
+                    myNewRow["Order"] = excelRange.Cells[i, 19].Value2.ToString() != "" ? excelRange.Cells[i, 19].Value2.ToString() : null;
+                    if (excelRange.Cells[i, 20].Value2 != null)
+                    {
+                        conv = DateTime.FromOADate(double.Parse(excelRange.Cells[i, 20].Value2.ToString()));
+                        myNewRow["Clearing_Date"] = conv;
+                    }
+                    myNewRow["Fiscal_Year"] = excelRange.Cells[i, 21].Value2.ToString() != "" ? excelRange.Cells[i, 21].Value2.ToString() : null;
+                    myNewRow["Cost_Center"] = excelRange.Cells[i, 22].Value2.ToString() != "" ? excelRange.Cells[i, 22].Value2.ToString() : null;
+                    myNewRow["GL_Account"] = excelRange.Cells[i, 23].Value2.ToString() != "" ? excelRange.Cells[i, 23].Value2.ToString() : null;
+                    myNewRow["Date_Created"] = dtnow;
+                    MyDataTable.Rows.Add(myNewRow);
+                    Console.WriteLine("Successfully Validated Row number:" + RowCount);
+                    RowCount++;
+                }
+
+                InsertFinance_Source2(MyDataTable, oErrorLog);
+
+                //after reading, relaase the excel project
+                excelApp.Quit();
+                System.Runtime.InteropServices.Marshal.ReleaseComObject(excelApp);
+                Console.ReadLine();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                oErrorLog.WriteErrorLog(ex.Message);
+                oErrorLog.WriteErrorLog("Something went wrong on line number: " + RowCount + "in CSV file");
+                return false;
+            }
+        }
+
+        public static void InsertFinance_Source2(DataTable dt, ErrorLog oErrorLog)
+        {
+            try
+            {
+                string tableName = ConfigurationManager.AppSettings["Finance_Source2"];
+                string ssqlconnectionstring = ConfigurationManager.ConnectionStrings["DB_ConnectionString"].ToString();
+
+                oErrorLog.WriteErrorLog("Connected to Database successfully.");
+                SqlBulkCopy bulkcopy = new SqlBulkCopy(ssqlconnectionstring);
+                bulkcopy.DestinationTableName = tableName;
+                SqlConnection con = new SqlConnection(ssqlconnectionstring);
+                con.Open();
+                bulkcopy.ColumnMappings.Add("Symbol", "Symbol");
+                bulkcopy.ColumnMappings.Add("Assignment", "Assignment");
+                bulkcopy.ColumnMappings.Add("Document_Number", "Document_Number");
+                bulkcopy.ColumnMappings.Add("Business_Area", "Business_Area");
+                bulkcopy.ColumnMappings.Add("Document_type", "Document_type");
+                bulkcopy.ColumnMappings.Add("Document_Date", "Document_Date");
+                bulkcopy.ColumnMappings.Add("Posting_Key", "Posting_Key");
+                bulkcopy.ColumnMappings.Add("Amount_in_Local_Currency", "Amount_in_Local_Currency");
+                bulkcopy.ColumnMappings.Add("Local_Currency", "Local_Currency");
+                bulkcopy.ColumnMappings.Add("Material", "Material");
+                bulkcopy.ColumnMappings.Add("Profit_Center", "Profit_Center");
+                bulkcopy.ColumnMappings.Add("Segment", "Segment");
+                bulkcopy.ColumnMappings.Add("Text", "Text");
+                bulkcopy.ColumnMappings.Add("Offsetting_Account", "Offsetting_Account");
+                bulkcopy.ColumnMappings.Add("Quantity", "Quantity");
+                bulkcopy.ColumnMappings.Add("Plant", "Plant");
+                bulkcopy.ColumnMappings.Add("Posting_Date", "Posting_Date");
+                bulkcopy.ColumnMappings.Add("Company_Code", "Company_Code");
+                bulkcopy.ColumnMappings.Add("Order", "Order");
+                bulkcopy.ColumnMappings.Add("Clearing_Date", "Clearing_Date");
+                bulkcopy.ColumnMappings.Add("Fiscal_Year", "Fiscal_Year");
+                bulkcopy.ColumnMappings.Add("Cost_Center", "Cost_Center");
+                bulkcopy.ColumnMappings.Add("GL_Account", "GL_Account");
+                bulkcopy.ColumnMappings.Add("Date_Created", "Date_Created");
+                bulkcopy.WriteToServer(dt);
+                con.Close();
+                oErrorLog.WriteErrorLog("Successfully imported Finance Source 2 Excel Document to database table.");
             }
             catch (Exception ex)
             {
