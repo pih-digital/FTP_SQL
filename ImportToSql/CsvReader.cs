@@ -323,7 +323,7 @@ namespace ImportToSql
                 bulkcopy.ColumnMappings.Add("Clearing_Date", "Clearing_Date");
                 bulkcopy.ColumnMappings.Add("Posting_Date", "Posting_Date");
                 bulkcopy.ColumnMappings.Add("Purchasing_Document", "Purchasing_Document");
-                //bulkcopy.ColumnMappings.Add("Cost_Center", "Cost_Center");
+                bulkcopy.ColumnMappings.Add("Cost_Center", "Cost_Center");
                 bulkcopy.ColumnMappings.Add("Profit_Center", "Profit_Center");
                 bulkcopy.ColumnMappings.Add("DebitCredit_ind", "DebitCredit_ind");
                 bulkcopy.ColumnMappings.Add("Invoice_Reference", "Invoice_Reference");
@@ -492,6 +492,7 @@ namespace ImportToSql
                 bulkcopy.ColumnMappings.Add("Posting_Date", "Posting_Date");
                 bulkcopy.ColumnMappings.Add("Net_Due_Date", "Net_Due_Date");
                 bulkcopy.ColumnMappings.Add("Purchasing_Document", "Purchasing_Document");
+                bulkcopy.ColumnMappings.Add("Cost_Center", "Cost_Center");
                 bulkcopy.ColumnMappings.Add("Profit_Center", "Profit_Center");
                 bulkcopy.ColumnMappings.Add("DebitCredit_ind", "DebitCredit_ind");
                 bulkcopy.ColumnMappings.Add("Contract_Number", "Contract_Number");
@@ -525,12 +526,34 @@ namespace ImportToSql
             {
                 connection.Open();
                 SqlCommand cmd = new SqlCommand(sqlStatement, connection);
-                //cmd.Parameters.AddWithValue("@Period", Period);
-                //cmd.Parameters.AddWithValue("@Year", Year);
-                //cmd.Parameters.AddWithValue("@Company_Code", Company_Code);
                 cmd.CommandType = CommandType.Text;
                 cmd.ExecuteNonQuery();
                 oErrorLog.WriteErrorLog("Deleted the record from database table successfully [Period] = " + Period + " and [Year] = " + Year + " and [Company_Code] =" + Company_Code);
+            }
+            catch (Exception ex)
+            {
+                oErrorLog.WriteErrorLog(ex.Message);
+            }
+            finally
+            {
+                connection.Close();
+            }
+        }
+
+        public static void DeleteDatabaseTable(string tablename, ErrorLog oErrorLog)
+        {
+            string ssqlconnectionstring = ConfigurationManager.ConnectionStrings["DB_ConnectionString"].ToString();
+            SqlConnection connection = new SqlConnection(ssqlconnectionstring);
+            oErrorLog.WriteErrorLog("Connected to Database successfully.");
+
+            string sqlStatement = " DELETE FROM ["+tablename +"]  ";
+            try
+            {
+                connection.Open();
+                SqlCommand cmd = new SqlCommand(sqlStatement, connection);
+                cmd.CommandType = CommandType.Text;
+                cmd.ExecuteNonQuery();
+                oErrorLog.WriteErrorLog("Deleted the record from database table successfully.");
             }
             catch (Exception ex)
             {
@@ -747,6 +770,7 @@ namespace ImportToSql
                         RowCount++;
                     }
                 }
+                DeleteDatabaseTable(ConfigurationManager.AppSettings["ROMastertableName"], oErrorLog);
                 InsertROMaster(csvData, oErrorLog);
                 return true;
             }
@@ -762,7 +786,7 @@ namespace ImportToSql
         {
             try
             {
-                string tableName = ConfigurationManager.AppSettings["RO_Master"];
+                string tableName = ConfigurationManager.AppSettings["ROMastertableName"];
                 string ssqlconnectionstring = ConfigurationManager.ConnectionStrings["DB_ConnectionString"].ToString();
 
                 oErrorLog.WriteErrorLog("Connected to Database successfully.");
