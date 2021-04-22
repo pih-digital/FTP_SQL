@@ -105,22 +105,21 @@ namespace ImportToSql
             if (AllowToFFM == "true")
             {
                 Console.WriteLine("Fixtures Fittings Master Data Extraction has been started.");
-                var dt1 = CsvReader.GetDataTabletFromCSVFile(FFMfilePath, oErrorLog);
+                var dt1 = CsvReader.GetDTFromRO_FFMFile(FFMfilePath, oErrorLog);
                 Console.WriteLine("Fixtures Fittings Master CSV file has been completed.");
             }
 
             if (AllowToRunMM == "true")
             {
                 Console.WriteLine("Measurements Master Data Extraction has been started.");
-                var dt1 = CsvReader.GetDataTabletFromCSVFile(MMfilePath, oErrorLog);
+                var dt1 = CsvReader.GetDTFromROMeasureFile(MMfilePath, oErrorLog);
                 Console.WriteLine("Measurements Master CSV file has been completed.");
             }
-
 
             if (AllowToRunCM == "true")
             {
                 Console.WriteLine("Conditions Master Data Extraction has been started.");
-                var dt1 = CsvReader.GetDataTabletFromCSVFile(CMfilePath, oErrorLog);
+                var dt1 = CsvReader.GetDTFromRO_Conditions_MasterFile(CMfilePath, oErrorLog);
                 Console.WriteLine("Conditions Master CSV file has been completed.");
             }
 
@@ -134,14 +133,14 @@ namespace ImportToSql
             if (AllowToRunCashflow == "true")
             {
                 Console.WriteLine("Cashflow Data Extraction has been started.");
-                var dt1 = CsvReader.GetDataTabletFromCSVFile(CashflowfilePath, oErrorLog);
+                var dt1 = CsvReader.GetDTFromCashflowFile(CashflowfilePath, oErrorLog);
                 Console.WriteLine("Cashflow CSV file has been completed.");
             }
 
             if (AllowToRunProfitabilty == "true")
             {
                 Console.WriteLine("Profitabilty Data Extraction has been started.");
-                var dt1 = CsvReader.GetDataTabletFromCSVFile(ProfitabiltyfilePath, oErrorLog);
+                var dt1 = CsvReader.GetDTFromProfitabiltyFile(ProfitabiltyfilePath, oErrorLog);
                 Console.WriteLine("Profitabilty CSV file has been completed.");
             }
 

@@ -728,7 +728,7 @@ namespace ImportToSql
                 using (TextFieldParser csvReader = new TextFieldParser(csv_file_path))
                 {
                     csvReader.SetDelimiters(new string[] { "|" });
-                    csvReader.HasFieldsEnclosedInQuotes = true;
+                    csvReader.HasFieldsEnclosedInQuotes = false;
 
                     //read column names
                     string[] colFields = csvReader.ReadFields();
@@ -988,6 +988,720 @@ namespace ImportToSql
             }
         }
 
+        public static bool GetDTFromRO_FFMFile(string csv_file_path, ErrorLog oErrorLog)
+        {
+            DataTable csvData = new DataTable();
+            DataRow myDataRow;
+            DateTime dtnow = DateTime.Now;
+            int RowCount = 0;
+            try
+            {
+                using (TextFieldParser csvReader = new TextFieldParser(csv_file_path))
+                {
+                    csvReader.SetDelimiters(new string[] { "|" });
+                    csvReader.HasFieldsEnclosedInQuotes = true;
 
+                    //read column names
+                    string[] colFields = csvReader.ReadFields();
+                    foreach (string column in colFields)
+                    {
+                        DataColumn datacolumn = new DataColumn(column);
+                        datacolumn.ColumnName = datacolumn.ColumnName.Replace(" ", "_").Replace("/", "").Replace(".", "").Replace(",,", "");
+                        datacolumn.AllowDBNull = true;
+                        if (datacolumn.ColumnName.Contains("Row_Valid_From") || datacolumn.ColumnName.Contains("Row_Valid_To") || datacolumn.ColumnName.Contains("Cash_Flow_From"))
+                            datacolumn.DataType = System.Type.GetType("System.DateTime");
+
+                        csvData.Columns.Add(datacolumn);
+                    }
+
+                    DataColumn dcCreatedDate = new DataColumn("Date_Created");
+                    dcCreatedDate.AllowDBNull = true;
+                    csvData.Columns.Add(dcCreatedDate);
+                    while (!csvReader.EndOfData)
+                    {
+                        string[] fieldData = csvReader.ReadFields();
+                        myDataRow = csvData.NewRow();
+                        //Making empty value as null
+                        for (int i = 0; i < fieldData.Length; i++)
+                        {
+                            if (fieldData[i] != "" && fieldData[i] != "00.00.0000")
+                            {
+                                myDataRow[i] = fieldData[i];
+                            }
+                            else if (fieldData[i] == "" || fieldData[i] == "00.00.0000")
+                            {
+                                if (i == 9 || i == 17 || i == 18)
+                                    myDataRow[i] = DBNull.Value;
+                                else
+                                    myDataRow[i] = null;
+                            }
+                        }
+                        myDataRow["Date_Created"] = dtnow;
+                        csvData.Rows.Add(myDataRow);
+                        RowCount++;
+                    }
+                }
+                DeleteDatabaseTable(ConfigurationManager.AppSettings["FFMtableName"], oErrorLog);
+                InsertRO_FFM(csvData, oErrorLog);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                oErrorLog.WriteErrorLog(ex.Message);
+                oErrorLog.WriteErrorLog("Something went wrong on line number: " + RowCount + "in CSV file");
+                return false;
+            }
+        }
+
+        public static void InsertRO_FFM(DataTable dt, ErrorLog oErrorLog)
+        {
+            try
+            {
+                string tableName = ConfigurationManager.AppSettings["FFMtableName"];
+                string ssqlconnectionstring = ConfigurationManager.ConnectionStrings["DB_ConnectionString"].ToString();
+
+                oErrorLog.WriteErrorLog("Connected to Database successfully.");
+                SqlBulkCopy bulkcopy = new SqlBulkCopy(ssqlconnectionstring);
+                bulkcopy.DestinationTableName = tableName;
+                SqlConnection con = new SqlConnection(ssqlconnectionstring);
+                con.Open();
+                bulkcopy.ColumnMappings.Add("Company_Code", "Company_Code");
+                bulkcopy.ColumnMappings.Add("Company_Name", "Company_Name");
+                bulkcopy.ColumnMappings.Add("Business_Entity", "Business_Entity");
+                bulkcopy.ColumnMappings.Add("Business_Entity_Name", "Business_Entity_Name");
+                bulkcopy.ColumnMappings.Add("Building", "Building");
+                bulkcopy.ColumnMappings.Add("Building_Name", "Building_Name");
+                bulkcopy.ColumnMappings.Add("Rental_Object", "Rental_Object");
+                bulkcopy.ColumnMappings.Add("Rental_Object_Name", "Rental_Object_Name");
+                bulkcopy.ColumnMappings.Add("Object_ID", "Object_ID");
+                bulkcopy.ColumnMappings.Add("Usage_type_of_rental_unit", "Usage_type_of_rental_unit");
+                bulkcopy.ColumnMappings.Add("Cash_Flow_From", "Cash_Flow_From");
+                bulkcopy.ColumnMappings.Add("Neighborhood", "Neighborhood");
+                bulkcopy.ColumnMappings.Add("Floor_shrt_nme", "Floor_shrt_nme");
+                bulkcopy.ColumnMappings.Add("Floor_long_name", "Floor_long_name");
+                bulkcopy.ColumnMappings.Add("City", "City");
+                bulkcopy.ColumnMappings.Add("Country_Key", "Country_Key");
+                bulkcopy.ColumnMappings.Add("RU_No_Old", "RU_No_Old");
+                bulkcopy.ColumnMappings.Add("Profit_Center", "Profit_Center");
+                bulkcopy.ColumnMappings.Add("Row_Valid_From", "Row_Valid_From");
+                bulkcopy.ColumnMappings.Add("Row_Valid_To", "Row_Valid_To");
+                bulkcopy.ColumnMappings.Add("Date_Created", "Date_Created");
+                bulkcopy.WriteToServer(dt);
+                con.Close();
+                oErrorLog.WriteErrorLog("Successfully import RO Master CSV to database table.");
+            }
+            catch (Exception ex)
+            {
+                oErrorLog.WriteErrorLog(ex.Message);
+            }
+        }
+
+        public static bool GetDTFromROMeasureFile(string csv_file_path, ErrorLog oErrorLog)
+        {
+            DataTable csvData = new DataTable();
+            DataRow myDataRow;
+            DateTime dtnow = DateTime.Now;
+            int RowCount = 0;
+            try
+            {
+                using (TextFieldParser csvReader = new TextFieldParser(csv_file_path))
+                {
+                    csvReader.SetDelimiters(new string[] { "|" });
+                    csvReader.HasFieldsEnclosedInQuotes = true;
+
+                    //read column names
+                    string[] colFields = csvReader.ReadFields();
+                    foreach (string column in colFields)
+                    {
+                        DataColumn datacolumn = new DataColumn(column);
+                        datacolumn.ColumnName = datacolumn.ColumnName.Replace(" ", "_").Replace("/", "").Replace(".", "").Replace(",,", "");
+                        datacolumn.AllowDBNull = true;
+                        csvData.Columns.Add(datacolumn);
+                    }
+
+                    DataColumn dcCreatedDate = new DataColumn("Date_Created");
+                    dcCreatedDate.AllowDBNull = true;
+                    csvData.Columns.Add(dcCreatedDate);
+                    while (!csvReader.EndOfData)
+                    {
+                        string[] fieldData = csvReader.ReadFields();
+                        myDataRow = csvData.NewRow();
+                        //Making empty value as null
+                        for (int i = 0; i < fieldData.Length; i++)
+                        {
+                            if (fieldData[i] != "" && fieldData[i] != "00.00.0000")
+                            {
+                                myDataRow[i] = fieldData[i];
+                            }
+                            else if (fieldData[i] == "" || fieldData[i] == "00.00.0000")
+                            {
+                                    myDataRow[i] = null;
+                            }
+                        }
+                        myDataRow["Date_Created"] = dtnow;
+                        csvData.Rows.Add(myDataRow);
+                        RowCount++;
+                    }
+                }
+                DeleteDatabaseTable(ConfigurationManager.AppSettings["MeasurementsMastertableName"], oErrorLog);
+                InsertROMeasure(csvData, oErrorLog);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                oErrorLog.WriteErrorLog(ex.Message);
+                oErrorLog.WriteErrorLog("Something went wrong on line number: " + RowCount + "in CSV file");
+                return false;
+            }
+        }
+
+        public static void InsertROMeasure(DataTable dt, ErrorLog oErrorLog)
+        {
+            try
+            {
+                string tableName = ConfigurationManager.AppSettings["MeasurementsMastertableName"];
+                string ssqlconnectionstring = ConfigurationManager.ConnectionStrings["DB_ConnectionString"].ToString();
+
+                oErrorLog.WriteErrorLog("Connected to Database successfully.");
+                SqlBulkCopy bulkcopy = new SqlBulkCopy(ssqlconnectionstring);
+                bulkcopy.DestinationTableName = tableName;
+                SqlConnection con = new SqlConnection(ssqlconnectionstring);
+                con.Open();
+                bulkcopy.ColumnMappings.Add("Company_Code", "Company_Code");
+                bulkcopy.ColumnMappings.Add("Business_Entity", "Business_Entity");
+                bulkcopy.ColumnMappings.Add("Building", "Building");
+                bulkcopy.ColumnMappings.Add("Pooled_SpaceRU", "Pooled_SpaceRU");
+               // bulkcopy.ColumnMappings.Add("Rental_Space", "Rental_Space");
+                bulkcopy.ColumnMappings.Add("Object_Type", "Object_Type");
+                bulkcopy.ColumnMappings.Add("Object_ID", "Object_ID");
+                bulkcopy.ColumnMappings.Add("Name", "Name");
+               // bulkcopy.ColumnMappings.Add("Status", "Status");
+                bulkcopy.ColumnMappings.Add("Med_Name_of_Meas_Type", "Med_Name_of_Meas_Type");
+                bulkcopy.ColumnMappings.Add("Amount", "Amount");
+                bulkcopy.ColumnMappings.Add("Capacity", "Capacity");
+                bulkcopy.ColumnMappings.Add("Units_in", "Units_in");
+                bulkcopy.ColumnMappings.Add("Date_Created", "Date_Created");
+                bulkcopy.WriteToServer(dt);
+                con.Close();
+                oErrorLog.WriteErrorLog("Successfully import RO Master CSV to database table.");
+            }
+            catch (Exception ex)
+            {
+                oErrorLog.WriteErrorLog(ex.Message);
+            }
+        }
+
+        public static bool GetDTFromRO_Conditions_MasterFile(string csv_file_path, ErrorLog oErrorLog)
+        {
+            DataTable csvData = new DataTable();
+            DataRow myDataRow;
+            DateTime dtnow = DateTime.Now;
+            int RowCount = 0;
+            try
+            {
+                using (TextFieldParser csvReader = new TextFieldParser(csv_file_path))
+                {
+                    csvReader.SetDelimiters(new string[] { "|" });
+                    csvReader.HasFieldsEnclosedInQuotes = true;
+                    int Condition = 0; 
+                    //read column names
+                    string[] colFields = csvReader.ReadFields();
+                    foreach (string column in colFields)
+                    {
+                        DataColumn datacolumn = new DataColumn(column);
+                        if (datacolumn.ColumnName.Contains("Condition Type"))
+                        {
+                            datacolumn.ColumnName = datacolumn.ColumnName.Replace(" ", "_") + "_" + Condition;
+                            Condition++;
+                        }
+                        else
+                        {
+                            datacolumn.ColumnName = datacolumn.ColumnName.Replace(" ", "_").Replace("/", "").Replace(".", "").Replace(",,", "");
+                        }
+                        datacolumn.AllowDBNull = true;
+                        if (datacolumn.ColumnName.Contains("Relnship_Valid_From") || datacolumn.ColumnName.Contains("Relnship_Valid_To"))
+                            datacolumn.DataType = System.Type.GetType("System.DateTime");
+
+                        csvData.Columns.Add(datacolumn);
+                    }
+
+                    DataColumn dcCreatedDate = new DataColumn("Date_Created");
+                    dcCreatedDate.AllowDBNull = true;
+                    csvData.Columns.Add(dcCreatedDate);
+                    while (!csvReader.EndOfData)
+                    {
+                        string[] fieldData = csvReader.ReadFields();
+                        myDataRow = csvData.NewRow();
+                        //Making empty value as null
+                        for (int i = 0; i < fieldData.Length; i++)
+                        {
+                            if (fieldData[i] != "" && fieldData[i] != "00.00.0000")
+                            {
+                                myDataRow[i] = fieldData[i];
+                            }
+                            else if (fieldData[i] == "" || fieldData[i] == "00.00.0000")
+                            {
+                                if (i == 11 || i == 12)
+                                    myDataRow[i] = DBNull.Value;
+                                else
+                                    myDataRow[i] = null;
+                            }
+                        }
+                        myDataRow["Date_Created"] = dtnow;
+                        csvData.Rows.Add(myDataRow);
+                        RowCount++;
+                    }
+                }
+                DeleteDatabaseTable(ConfigurationManager.AppSettings["ConditionsMastertableName"], oErrorLog);
+                InsertRO_Conditions_Master(csvData, oErrorLog);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                oErrorLog.WriteErrorLog(ex.Message);
+                oErrorLog.WriteErrorLog("Something went wrong on line number: " + RowCount + "in CSV file");
+                return false;
+            }
+        }
+
+        public static void InsertRO_Conditions_Master(DataTable dt, ErrorLog oErrorLog)
+        {
+            try
+            {
+                string tableName = ConfigurationManager.AppSettings["ConditionsMastertableName"];
+                string ssqlconnectionstring = ConfigurationManager.ConnectionStrings["DB_ConnectionString"].ToString();
+
+                oErrorLog.WriteErrorLog("Connected to Database successfully.");
+                SqlBulkCopy bulkcopy = new SqlBulkCopy(ssqlconnectionstring);
+                bulkcopy.DestinationTableName = tableName;
+                SqlConnection con = new SqlConnection(ssqlconnectionstring);
+                con.Open();
+                bulkcopy.ColumnMappings.Add("Company_Code", "Company_Code");
+                bulkcopy.ColumnMappings.Add("Business_Entity", "Business_Entity");
+                bulkcopy.ColumnMappings.Add("Building", "Building");
+                bulkcopy.ColumnMappings.Add("Pooled_SpaceRU", "Pooled_SpaceRU");
+                bulkcopy.ColumnMappings.Add("Object_Type", "Object_Type");
+                bulkcopy.ColumnMappings.Add("Object_ID", "Object_ID");
+                bulkcopy.ColumnMappings.Add("Name", "Name");
+                bulkcopy.ColumnMappings.Add("Condition_Type_0", "Condition_Type");
+                bulkcopy.ColumnMappings.Add("Condition_Type_1", "Condition_Type_Text");
+                bulkcopy.ColumnMappings.Add("Condition_Amount", "Condition_Amount");
+                bulkcopy.ColumnMappings.Add("Currency", "Currency");
+                bulkcopy.ColumnMappings.Add("Relnship_Valid_From", "Relnship_Valid_From");
+                bulkcopy.ColumnMappings.Add("Relnship_Valid_To", "Relnship_Valid_To");
+                bulkcopy.ColumnMappings.Add("Frequency", "Frequency");
+                bulkcopy.ColumnMappings.Add("Frequency_Unit", "Frequency_Unit");
+                bulkcopy.ColumnMappings.Add("Date_Created", "Date_Created");
+                bulkcopy.WriteToServer(dt);
+                con.Close();
+                oErrorLog.WriteErrorLog("Successfully import RO Master CSV to database table.");
+            }
+            catch (Exception ex)
+            {
+                oErrorLog.WriteErrorLog(ex.Message);
+            }
+        }
+
+        public static bool GetDTFromCashflowFile(string csv_file_path, ErrorLog oErrorLog)
+        {
+            DataTable csvData = new DataTable();
+            DataRow myDataRow;
+            DateTime dtnow = DateTime.Now;
+            int RowCount = 0, Condition = 1, ObjectId = 1, RoleCategory = 1, AddressType = 1;
+
+            try
+            {
+                using (TextFieldParser csvReader = new TextFieldParser(csv_file_path))
+                {
+                    csvReader.SetDelimiters(new string[] { "`" });
+                    csvReader.HasFieldsEnclosedInQuotes = false;
+
+                    //read column names
+                    string[] colFields = csvReader.ReadFields();
+                    foreach (string column in colFields)
+                    {
+                        DataColumn datacolumn = new DataColumn(column);
+                        if (datacolumn.ColumnName.Contains("Condition Type"))
+                        {
+                            datacolumn.ColumnName = datacolumn.ColumnName.Replace(" ", "_").Replace("/", "").Replace(".", "") + "_" + Condition;
+                            Condition++;
+                        }
+                        else if (datacolumn.ColumnName.Contains("Object ID"))
+                        {
+                            datacolumn.ColumnName = datacolumn.ColumnName.Replace(" ", "_").Replace("/", "").Replace(".", "") + "_" + ObjectId;
+                            ObjectId++;
+                        }
+                        else if (datacolumn.ColumnName.Contains("Role Category Categ"))
+                        {
+                            datacolumn.ColumnName = datacolumn.ColumnName.Replace(" ", "_").Replace("/", "").Replace(".", "") + "_" + RoleCategory;
+                            RoleCategory++;
+                        }
+                        else if (datacolumn.ColumnName.Contains("Address Type"))
+                        {
+                            datacolumn.ColumnName = datacolumn.ColumnName.Replace(" ", "_").Replace("/", "").Replace(".", "") + "_" + AddressType;
+                            AddressType++;
+                        }
+                        else
+                        {
+                            datacolumn.ColumnName = datacolumn.ColumnName.Replace(" ", "_").Replace("/", "").Replace(".", "").Replace(",,", "").Replace(":", "");
+                        }
+                        datacolumn.AllowDBNull = true;
+                        if (datacolumn.ColumnName.Contains("Contract_start_date") || datacolumn.ColumnName.Contains("Calculation_From") || datacolumn.ColumnName.Contains("Calculation_to")
+                            || datacolumn.ColumnName.Contains("Active_from") || datacolumn.ColumnName.Contains("Due_date") || datacolumn.ColumnName.Contains("Cash_Flow_From")
+                            || datacolumn.ColumnName.Contains("Calculation_Date") || datacolumn.ColumnName.Contains("Row_Valid_From") || datacolumn.ColumnName.Contains("Row_Valid_To")
+                            || datacolumn.ColumnName.Contains("Object_Valid_To") || datacolumn.ColumnName.Contains("First_Contract_End"))
+                            datacolumn.DataType = System.Type.GetType("System.DateTime");
+
+                        csvData.Columns.Add(datacolumn);
+                    }
+
+                    DataColumn dcCreatedDate = new DataColumn("Date_Created");
+                    dcCreatedDate.AllowDBNull = true;
+                    csvData.Columns.Add(dcCreatedDate);
+                    while (!csvReader.EndOfData)
+                    {
+                        string[] fieldData = csvReader.ReadFields();
+                        myDataRow = csvData.NewRow();
+                        //Making empty value as null
+                        for (int i = 0; i < fieldData.Length; i++)
+                        {
+                            if (fieldData[i] != "" && fieldData[i] != "00.00.0000")
+                            {
+                                myDataRow[i] = fieldData[i];
+                            }
+                            else if (fieldData[i] == "" || fieldData[i] == "00.00.0000")
+                            {
+                                if (i == 11 || i == 12 || i == 13 || i == 16 || i == 17 || i == 20 || i == 25 || i == 58 || i == 59 || i == 68 || i == 69)
+                                    myDataRow[i] = DBNull.Value;
+                                else
+                                    myDataRow[i] = null;
+                            }
+                        }
+                        myDataRow["Date_Created"] = dtnow;
+                        csvData.Rows.Add(myDataRow);
+                        RowCount++;
+                    }
+                }
+                DeleteDatabaseTable(ConfigurationManager.AppSettings["CashflowtableName"], oErrorLog);
+                InsertCashflow(csvData, oErrorLog);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                oErrorLog.WriteErrorLog(ex.Message);
+                oErrorLog.WriteErrorLog("Something went wrong on line number: " + RowCount + "in CSV file");
+                return false;
+            }
+        }
+
+        public static void InsertCashflow(DataTable dt, ErrorLog oErrorLog)
+        {
+            try
+            {
+                string tableName = ConfigurationManager.AppSettings["CashflowtableName"];
+                string ssqlconnectionstring = ConfigurationManager.ConnectionStrings["DB_ConnectionString"].ToString();
+
+                oErrorLog.WriteErrorLog("Connected to Database successfully.");
+                SqlBulkCopy bulkcopy = new SqlBulkCopy(ssqlconnectionstring);
+                bulkcopy.DestinationTableName = tableName;
+                SqlConnection con = new SqlConnection(ssqlconnectionstring);
+                con.Open();
+                bulkcopy.ColumnMappings.Add("Company_Code", "Company_Code");
+                bulkcopy.ColumnMappings.Add("Object_Company_Code", "Object_Company_Code");
+                bulkcopy.ColumnMappings.Add("Real_Estate_Key", "Real_Estate_Key");
+                bulkcopy.ColumnMappings.Add("Business_Entity", "Business_Entity");
+                bulkcopy.ColumnMappings.Add("Pooled_SpaceRU", "Pooled_SpaceRU");
+                bulkcopy.ColumnMappings.Add("Status", "Status");
+                bulkcopy.ColumnMappings.Add("Contrtype_text", "Contrtype_text");
+                bulkcopy.ColumnMappings.Add("Object_ID_1", "Object_ID");
+                bulkcopy.ColumnMappings.Add("Contract", "Contract");
+                bulkcopy.ColumnMappings.Add("1st_Main_Contractual_Partner_Name", "First_Main_Contractual_Partner_Name");
+                bulkcopy.ColumnMappings.Add("Object_ID_2", "Object_ID2");
+                bulkcopy.ColumnMappings.Add("Contract_start_date", "Contract_start_date");
+                bulkcopy.ColumnMappings.Add("Calculation_From", "Calculation_From");
+                bulkcopy.ColumnMappings.Add("Calculation_to", "Calculation_to");
+                bulkcopy.ColumnMappings.Add("Condition_Type_1", "Condition_Type");
+                bulkcopy.ColumnMappings.Add("Condition_Type_2", "Condition_Type_Text");
+                bulkcopy.ColumnMappings.Add("Active_from", "Active_from");
+                bulkcopy.ColumnMappings.Add("Due_date", "Due_date");
+                bulkcopy.ColumnMappings.Add("Net_in_Local_Crcy", "Net_in_Local_Crcy");
+                bulkcopy.ColumnMappings.Add("Contract_Currency", "Contract_Currency");
+                bulkcopy.ColumnMappings.Add("Cash_Flow_From", "Cash_Flow_From");
+                bulkcopy.ColumnMappings.Add("BE_for_Contract", "BE_for_Contract");
+                bulkcopy.ColumnMappings.Add("Company_Name", "Company_Name");
+                bulkcopy.ColumnMappings.Add("Profit_Center", "Profit_Center");
+                bulkcopy.ColumnMappings.Add("Tenancy_law_description", "Tenancy_law_description");
+                bulkcopy.ColumnMappings.Add("Calculation_Date", "Calculation_Date");
+                bulkcopy.ColumnMappings.Add("WBS_Element", "WBS_Element");
+                bulkcopy.ColumnMappings.Add("Valuation_Relevance", "Valuation_Relevance");
+                bulkcopy.ColumnMappings.Add("Name_of_Cost_Center", "Name_of_Cost_Center");
+                bulkcopy.ColumnMappings.Add("Order_Name", "Order_Name");
+                bulkcopy.ColumnMappings.Add("Description_of_WBS_element", "Description_of_WBS_element");
+                bulkcopy.ColumnMappings.Add("Local_Currency", "Local_Currency");
+                bulkcopy.ColumnMappings.Add("Net_CndCrcy", "Net_CndCrcy");
+                bulkcopy.ColumnMappings.Add("Gross_CndCrcy", "Gross_CndCrcy");
+                bulkcopy.ColumnMappings.Add("Sales_Tax_CndCrcy", "Sales_Tax_CndCrcy");
+                bulkcopy.ColumnMappings.Add("Condition_currency", "Condition_currency");
+                bulkcopy.ColumnMappings.Add("Gross", "Gross");
+                bulkcopy.ColumnMappings.Add("Posting_Term", "Posting_Term");
+                bulkcopy.ColumnMappings.Add("Frequency_Term", "Frequency_Term");
+                bulkcopy.ColumnMappings.Add("Org_Term", "Org_Term");
+                bulkcopy.ColumnMappings.Add("Sales_Term", "Sales_Term");
+                bulkcopy.ColumnMappings.Add("Peak_Sales_Term", "Peak_Sales_Term");
+                bulkcopy.ColumnMappings.Add("Withholding_Tax_Term", "Withholding_Tax_Term");
+                bulkcopy.ColumnMappings.Add("Crcy_Transl_Rule", "Crcy_Transl_Rule");
+                bulkcopy.ColumnMappings.Add("Gross_in_Local_Crcy", "Gross_in_Local_Crcy");
+                bulkcopy.ColumnMappings.Add("LC_Tax_Amount", "LC_Tax_Amount");
+                bulkcopy.ColumnMappings.Add("Exchange_Rate", "Exchange_Rate");
+                bulkcopy.ColumnMappings.Add("Post_in_Cond_Crcy", "Post_in_Cond_Crcy");
+                bulkcopy.ColumnMappings.Add("Planned_TrslDate", "Planned_TrslDate");
+                bulkcopy.ColumnMappings.Add("Actual_TranslDate", "Actual_TranslDate");
+                bulkcopy.ColumnMappings.Add("Doc_Reference_Key", "Doc_Reference_Key");
+                bulkcopy.ColumnMappings.Add("Document", "Document");
+                bulkcopy.ColumnMappings.Add("Reference_Flow_Type", "Reference_Flow_Type");
+                bulkcopy.ColumnMappings.Add("Origin", "Origin");
+                bulkcopy.ColumnMappings.Add("Role_Category_Categ_1", "Role_Category_Categ");
+                bulkcopy.ColumnMappings.Add("Address_Type_1", "Address_Type");
+                bulkcopy.ColumnMappings.Add("Role_Category_Categ_2", "Role_Category_Categ2");
+                bulkcopy.ColumnMappings.Add("Address_Type_2", "Address_Type2");
+                bulkcopy.ColumnMappings.Add("Row_Valid_From", "Row_Valid_From");
+                bulkcopy.ColumnMappings.Add("Row_Valid_To", "Row_Valid_To");
+                bulkcopy.ColumnMappings.Add("Acct_DetermValue", "Acct_DetermValue");
+                bulkcopy.ColumnMappings.Add("PBCISR_number", "PBCISR_number");
+                bulkcopy.ColumnMappings.Add("ISRQR_Reference_Number", "ISRQR_Reference_Number");
+                bulkcopy.ColumnMappings.Add("Text_of_Vendor_Invoice", "Text_of_Vendor_Invoice");
+                bulkcopy.ColumnMappings.Add("Delete_FI_Text", "Delete_FI_Text");
+                bulkcopy.ColumnMappings.Add("Position", "Position");
+                bulkcopy.ColumnMappings.Add("Cash_Flow_Partner", "Cash_Flow_Partner");
+                bulkcopy.ColumnMappings.Add("Descr_Cash_Flow_BP", "Cash_Flow_Partner_Name");
+                bulkcopy.ColumnMappings.Add("Object_Valid_To", "Object_Valid_To");
+                bulkcopy.ColumnMappings.Add("1st_Contract_End", "First_Contract_End");
+                bulkcopy.ColumnMappings.Add("Contract_Conclusion", "Contract_Conclusion");
+                bulkcopy.ColumnMappings.Add("Date_Created", "Date_Created");
+                bulkcopy.WriteToServer(dt);
+                con.Close();
+                oErrorLog.WriteErrorLog("Successfully import Cashflow CSV to database table.");
+            }
+            catch (Exception ex)
+            {
+                oErrorLog.WriteErrorLog(ex.Message);
+            }
+        }
+
+        public static bool GetDTFromProfitabiltyFile(string csv_file_path, ErrorLog oErrorLog)
+        {
+            DataTable csvData = new DataTable();
+            DataRow myDataRow;
+            DateTime dtnow = DateTime.Now;
+            int RowCount = 0;
+            try
+            {
+                using (TextFieldParser csvReader = new TextFieldParser(csv_file_path))
+                {
+                    csvReader.SetDelimiters(new string[] { "|" });
+                    csvReader.HasFieldsEnclosedInQuotes = true;
+
+                    //read column names
+                    string[] colFields = csvReader.ReadFields();
+                    foreach (string column in colFields)
+                    {
+                        DataColumn datacolumn = new DataColumn(column);
+                        datacolumn.ColumnName = datacolumn.ColumnName.Replace(" ", "_").Replace("/", "").Replace(".", "").Replace(",,", "");
+                        datacolumn.AllowDBNull = true;
+                        if (datacolumn.ColumnName.Contains("Row_Valid_From") || datacolumn.ColumnName.Contains("Row_Valid_To") || datacolumn.ColumnName.Contains("Cash_Flow_From"))
+                            datacolumn.DataType = System.Type.GetType("System.DateTime");
+
+                        csvData.Columns.Add(datacolumn);
+                    }
+
+                    DataColumn dcCreatedDate = new DataColumn("Date_Created");
+                    dcCreatedDate.AllowDBNull = true;
+                    csvData.Columns.Add(dcCreatedDate);
+                    while (!csvReader.EndOfData)
+                    {
+                        string[] fieldData = csvReader.ReadFields();
+                        myDataRow = csvData.NewRow();
+                        //Making empty value as null
+                        for (int i = 0; i < fieldData.Length; i++)
+                        {
+                            if (fieldData[i] != "" && fieldData[i] != "00.00.0000")
+                            {
+                                myDataRow[i] = fieldData[i];
+                            }
+                            else if (fieldData[i] == "" || fieldData[i] == "00.00.0000")
+                            {
+                                if (i == 9 || i == 17 || i == 18)
+                                    myDataRow[i] = DBNull.Value;
+                                else
+                                    myDataRow[i] = null;
+                            }
+                        }
+                        myDataRow["Date_Created"] = dtnow;
+                        csvData.Rows.Add(myDataRow);
+                        RowCount++;
+                    }
+                }
+                DeleteDatabaseTable(ConfigurationManager.AppSettings["ROMastertableName"], oErrorLog);
+                InsertROMaster(csvData, oErrorLog);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                oErrorLog.WriteErrorLog(ex.Message);
+                oErrorLog.WriteErrorLog("Something went wrong on line number: " + RowCount + "in CSV file");
+                return false;
+            }
+        }
+
+        public static void InsertProfitabilty(DataTable dt, ErrorLog oErrorLog)
+        {
+            try
+            {
+                string tableName = ConfigurationManager.AppSettings["ROMastertableName"];
+                string ssqlconnectionstring = ConfigurationManager.ConnectionStrings["DB_ConnectionString"].ToString();
+
+                oErrorLog.WriteErrorLog("Connected to Database successfully.");
+                SqlBulkCopy bulkcopy = new SqlBulkCopy(ssqlconnectionstring);
+                bulkcopy.DestinationTableName = tableName;
+                SqlConnection con = new SqlConnection(ssqlconnectionstring);
+                con.Open();
+                bulkcopy.ColumnMappings.Add("Company_Code", "Company_Code");
+                bulkcopy.ColumnMappings.Add("Company_Name", "Company_Name");
+                bulkcopy.ColumnMappings.Add("Business_Entity", "Business_Entity");
+                bulkcopy.ColumnMappings.Add("Business_Entity_Name", "Business_Entity_Name");
+                bulkcopy.ColumnMappings.Add("Building", "Building");
+                bulkcopy.ColumnMappings.Add("Building_Name", "Building_Name");
+                bulkcopy.ColumnMappings.Add("Rental_Object", "Rental_Object");
+                bulkcopy.ColumnMappings.Add("Rental_Object_Name", "Rental_Object_Name");
+                bulkcopy.ColumnMappings.Add("Object_ID", "Object_ID");
+                bulkcopy.ColumnMappings.Add("Usage_type_of_rental_unit", "Usage_type_of_rental_unit");
+                bulkcopy.ColumnMappings.Add("Cash_Flow_From", "Cash_Flow_From");
+                bulkcopy.ColumnMappings.Add("Neighborhood", "Neighborhood");
+                bulkcopy.ColumnMappings.Add("Floor_shrt_nme", "Floor_shrt_nme");
+                bulkcopy.ColumnMappings.Add("Floor_long_name", "Floor_long_name");
+                bulkcopy.ColumnMappings.Add("City", "City");
+                bulkcopy.ColumnMappings.Add("Country_Key", "Country_Key");
+                bulkcopy.ColumnMappings.Add("RU_No_Old", "RU_No_Old");
+                bulkcopy.ColumnMappings.Add("Profit_Center", "Profit_Center");
+                bulkcopy.ColumnMappings.Add("Row_Valid_From", "Row_Valid_From");
+                bulkcopy.ColumnMappings.Add("Row_Valid_To", "Row_Valid_To");
+                bulkcopy.ColumnMappings.Add("Date_Created", "Date_Created");
+                bulkcopy.WriteToServer(dt);
+                con.Close();
+                oErrorLog.WriteErrorLog("Successfully import RO Master CSV to database table.");
+            }
+            catch (Exception ex)
+            {
+                oErrorLog.WriteErrorLog(ex.Message);
+            }
+        }
+
+        public static bool GetDTFromRO_OccupancyFile(string csv_file_path, ErrorLog oErrorLog)
+        {
+            DataTable csvData = new DataTable();
+            DataRow myDataRow;
+            DateTime dtnow = DateTime.Now;
+            int RowCount = 0;
+            try
+            {
+                using (TextFieldParser csvReader = new TextFieldParser(csv_file_path))
+                {
+                    csvReader.SetDelimiters(new string[] { "|" });
+                    csvReader.HasFieldsEnclosedInQuotes = true;
+
+                    //read column names
+                    string[] colFields = csvReader.ReadFields();
+                    foreach (string column in colFields)
+                    {
+                        DataColumn datacolumn = new DataColumn(column);
+                        datacolumn.ColumnName = datacolumn.ColumnName.Replace(" ", "_").Replace("/", "").Replace(".", "").Replace(",,", "");
+                        datacolumn.AllowDBNull = true;
+                        if (datacolumn.ColumnName.Contains("Row_Valid_From") || datacolumn.ColumnName.Contains("Row_Valid_To") || datacolumn.ColumnName.Contains("Cash_Flow_From"))
+                            datacolumn.DataType = System.Type.GetType("System.DateTime");
+
+                        csvData.Columns.Add(datacolumn);
+                    }
+
+                    DataColumn dcCreatedDate = new DataColumn("Date_Created");
+                    dcCreatedDate.AllowDBNull = true;
+                    csvData.Columns.Add(dcCreatedDate);
+                    while (!csvReader.EndOfData)
+                    {
+                        string[] fieldData = csvReader.ReadFields();
+                        myDataRow = csvData.NewRow();
+                        //Making empty value as null
+                        for (int i = 0; i < fieldData.Length; i++)
+                        {
+                            if (fieldData[i] != "" && fieldData[i] != "00.00.0000")
+                            {
+                                myDataRow[i] = fieldData[i];
+                            }
+                            else if (fieldData[i] == "" || fieldData[i] == "00.00.0000")
+                            {
+                                if (i == 9 || i == 17 || i == 18)
+                                    myDataRow[i] = DBNull.Value;
+                                else
+                                    myDataRow[i] = null;
+                            }
+                        }
+                        myDataRow["Date_Created"] = dtnow;
+                        csvData.Rows.Add(myDataRow);
+                        RowCount++;
+                    }
+                }
+                DeleteDatabaseTable(ConfigurationManager.AppSettings["ROMastertableName"], oErrorLog);
+                InsertROMaster(csvData, oErrorLog);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                oErrorLog.WriteErrorLog(ex.Message);
+                oErrorLog.WriteErrorLog("Something went wrong on line number: " + RowCount + "in CSV file");
+                return false;
+            }
+        }
+
+        public static void InsertRO_Occupancy(DataTable dt, ErrorLog oErrorLog)
+        {
+            try
+            {
+                string tableName = ConfigurationManager.AppSettings["ROMastertableName"];
+                string ssqlconnectionstring = ConfigurationManager.ConnectionStrings["DB_ConnectionString"].ToString();
+
+                oErrorLog.WriteErrorLog("Connected to Database successfully.");
+                SqlBulkCopy bulkcopy = new SqlBulkCopy(ssqlconnectionstring);
+                bulkcopy.DestinationTableName = tableName;
+                SqlConnection con = new SqlConnection(ssqlconnectionstring);
+                con.Open();
+                bulkcopy.ColumnMappings.Add("Company_Code", "Company_Code");
+                bulkcopy.ColumnMappings.Add("Company_Name", "Company_Name");
+                bulkcopy.ColumnMappings.Add("Business_Entity", "Business_Entity");
+                bulkcopy.ColumnMappings.Add("Business_Entity_Name", "Business_Entity_Name");
+                bulkcopy.ColumnMappings.Add("Building", "Building");
+                bulkcopy.ColumnMappings.Add("Building_Name", "Building_Name");
+                bulkcopy.ColumnMappings.Add("Rental_Object", "Rental_Object");
+                bulkcopy.ColumnMappings.Add("Rental_Object_Name", "Rental_Object_Name");
+                bulkcopy.ColumnMappings.Add("Object_ID", "Object_ID");
+                bulkcopy.ColumnMappings.Add("Usage_type_of_rental_unit", "Usage_type_of_rental_unit");
+                bulkcopy.ColumnMappings.Add("Cash_Flow_From", "Cash_Flow_From");
+                bulkcopy.ColumnMappings.Add("Neighborhood", "Neighborhood");
+                bulkcopy.ColumnMappings.Add("Floor_shrt_nme", "Floor_shrt_nme");
+                bulkcopy.ColumnMappings.Add("Floor_long_name", "Floor_long_name");
+                bulkcopy.ColumnMappings.Add("City", "City");
+                bulkcopy.ColumnMappings.Add("Country_Key", "Country_Key");
+                bulkcopy.ColumnMappings.Add("RU_No_Old", "RU_No_Old");
+                bulkcopy.ColumnMappings.Add("Profit_Center", "Profit_Center");
+                bulkcopy.ColumnMappings.Add("Row_Valid_From", "Row_Valid_From");
+                bulkcopy.ColumnMappings.Add("Row_Valid_To", "Row_Valid_To");
+                bulkcopy.ColumnMappings.Add("Date_Created", "Date_Created");
+                bulkcopy.WriteToServer(dt);
+                con.Close();
+                oErrorLog.WriteErrorLog("Successfully import RO Master CSV to database table.");
+            }
+            catch (Exception ex)
+            {
+                oErrorLog.WriteErrorLog(ex.Message);
+            }
+        }
     }
 }
